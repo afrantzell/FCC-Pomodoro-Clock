@@ -1,0 +1,147 @@
+const SetTimer = ({type, value, handleClick}) => (
+ <div className = "SetTimer">  
+    <div id={`${type}-label`}><h1>{`${type} length`}</h1></div>
+    <div className = "TimerControls">
+    <div id={`${type}-increment`}><button onClick = {() => handleClick(true, `${type}`)}>+</button></div>
+    <div id={`${type}-length`}>{value}</div>
+    <div id={`${type}-decrement`}><button onClick = {() => handleClick(false, `${type}`)}>-</button></div></div>
+    
+  </div>
+)
+
+ const Timer = ({mode, time}) => (
+   <div>
+     <div id = "timer-label">{mode}</div>
+     <div id = "time-left">{time}</div>
+   </div>
+  )
+ 
+ const StartOrStop = ({isOn, handleStartOrStop, handleReset}) => (
+   <div className = "controls">
+ <button id = "start_stop" onClick={handleStartOrStop}>&#9658;&#10074;&#10074;</button>
+ <button id = "reset" onClick={handleReset}>&#8634;</button>
+   </div>
+ )
+
+class App extends React.Component {
+  constructor(props){
+    super(props)
+    this.state = {
+      session: 25,
+      break: 5,
+      timer: 25 * 60 * 1000,
+      isOn: false,
+      modified: false,
+      mode: "session"
+    }
+    
+    this.handleSetTimer = this.handleSetTimer.bind(this)
+    this.handleStartOrStop = this.handleStartOrStop.bind(this)
+    this.handleReset = this.handleReset.bind(this)
+  }
+  
+  handleStartOrStop () {
+    if(this.state.isOn){
+      clearInterval(this.app)
+    this.setState({
+      isOn: false
+    })
+    }
+    
+    else if(this.state.modified){
+      this.setState({timer: this.state.session*60*1000})
+        this.app = setInterval(() => 
+        this.setState({
+      timer: this.state.timer-1000,
+    isOn: true,
+    modified: false
+    }), 1000)
+    }
+    
+    else if(this.state.timer !== 0){
+    this.app = setInterval(() => 
+        this.setState({
+      timer: this.state.timer-1000,
+    isOn: true
+    }), 1000)
+  }
+    
+      else if(this.state.timer == 0){
+        this.state.timer = this.state.break;
+    this.app = setInterval(() => 
+        this.setState({
+      timer: this.state.timer-1000,
+    isOn: true
+    }), 1000)
+  }
+    
+  }
+  
+  handleSetTimer(inc, type){
+    if(inc == true && this.state[type]===60) return
+    if(!inc && this.state[type]===1) return
+      this.setState({
+      [type]: this.state[type] + (inc ? 1 : -1), modified: true
+    })
+    }
+      
+  handleReset() {
+   clearInterval(this.app)
+   this.setState(
+    {session: 25,
+    break: 5,
+    timer: 25 * 60 * 1000,
+    mode: "session"})  
+    his.audio.pause()
+    this.audio.currentTime = 0
+  }
+ 
+  componentDidUpdate(prevProps, prevState){
+    if(prevState.timer == 0 && prevState.mode == "session"){
+      this.setState({
+        timer: this.state.break * 60 * 1000, mode: "break"
+      })
+      this.audio.play()
+    }
+    
+    if(prevState.timer == 0 && prevState.mode == "break"){
+      this.setState({
+        timer: this.state.session * 60 * 1000, mode: "session"
+      })
+      this.audio.play()
+    }
+    
+  }
+  
+  render() {
+    
+    let startOrStop = (this.state.timer == 0) || (this.state.isOn == false) ?
+        <div id = "start_stop"><button onClick={this.startTimer}>start</button></div> :
+       <div id = "start_stop"><button onClick={this.stopTimer}>pause</button></div>
+    
+     return (
+       <div>
+         
+         <div className = "settings">
+         <SetTimer type = "session" value = {this.state.session} handleClick = {this.handleSetTimer}/>
+         <SetTimer type = "break" value = {this.state.break} handleClick = {this.handleSetTimer}/>
+         </div>
+         
+         <div className = "display"><h1>
+         <Timer mode = {this.state.mode} time = {moment(this.state.timer).format("mm:ss")} />
+         </h1>
+         </div>
+         
+         <div>
+         <StartOrStop isOn = {this.state.isOn} handleStartOrStop = {this.handleStartOrStop} handleReset = {this.handleReset}/></div>      
+       <audio
+         id = "beep"
+         src = "http://soundbible.com/grab.php?id=1919&type=wav"
+         ref={ref => this.audio = ref}
+         ></audio>
+       </div>
+     );
+  }
+}
+
+ReactDOM.render(<App />, document.getElementById("app"));
